@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B4F82">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="국면 카드">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>국면 카드</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:#F1F5FA;color:#0F172A;-webkit-text-size-adjust:100%;padding-bottom:140px}
+button{font-family:inherit;cursor:pointer;color:inherit}
+input,textarea,select{font-family:inherit}
+.hd{position:sticky;top:0;z-index:5;background:#0B4F82;color:#fff;padding:12px 16px 10px;padding-top:max(12px,env(safe-area-inset-top))}
+.hrow{display:flex;align-items:center;gap:8px}
+.hrow h1{flex:1;font-size:19px;font-weight:900;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb{border:0;background:rgba(255,255,255,.18);color:#fff;font-size:14px;font-weight:800;padding:7px 11px;border-radius:999px;white-space:nowrap}
+.sub{font-size:13px;opacity:.85;margin-top:2px}
+.seg{display:flex;gap:4px;background:rgba(255,255,255,.15);border-radius:12px;padding:4px;margin-top:10px;overflow-x:auto}
+.seg button{flex:1 0 auto;border:0;background:none;color:#fff;font-size:14px;font-weight:800;padding:9px 10px;border-radius:9px;white-space:nowrap}
+.seg button.on{background:#fff;color:#0B4F82}
+.seg button.add{flex:0 0 auto;opacity:.8}
+.bar{height:6px;background:rgba(255,255,255,.25);border-radius:3px;margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;background:#FCD34D;width:0;transition:width .3s}
+.list{padding:12px 16px}
+.card{background:#fff;border-radius:18px;margin-bottom:14px;box-shadow:0 2px 0 #E2E8F0;overflow:hidden;border:2px solid transparent}
+.card.now{border-color:#F59E0B}
+.card.done{opacity:.55}
+.ch{display:flex;align-items:center;gap:10px;padding:14px 16px 10px}
+.num{flex:none;width:34px;height:34px;border-radius:50%;background:#0B4F82;color:#fff;font-weight:900;display:grid;place-items:center;font-size:16px}
+.card.done .num{background:#94A3B8}
+.ct{flex:1;min-width:0}
+.ct b{display:block;font-size:17px;font-weight:900;line-height:1.25}
+.ct small{font-size:13px;color:#64748B;font-weight:700}
+.pen{flex:none;border:0;background:#F1F5F9;border-radius:10px;width:36px;height:36px;font-size:16px}
+.body{padding:0 16px 14px}
+.todo{list-style:none}
+.todo li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid #F1F5F9;font-size:15px;line-height:1.4}
+.todo li .bx{flex:none;width:24px;height:24px;border-radius:7px;border:2px solid #CBD5E1;display:grid;place-items:center;font-size:15px;color:#fff;margin-top:1px}
+.todo li.ok .bx{background:#16A34A;border-color:#16A34A}
+.todo li.ok .tx{color:#94A3B8;text-decoration:line-through}
+.tg{font-size:11px;font-weight:900;padding:2px 6px;border-radius:6px;margin-right:4px;vertical-align:1px;background:#E2E8F0;color:#334155}
+.img{display:block;width:100%;border-radius:12px;margin:10px 0 0}
+.msg{background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.5;white-space:pre-wrap;margin-top:10px;color:#334155;word-break:break-all}
+.btns{display:flex;gap:8px;margin-top:8px}
+.btns button{flex:1;border:0;border-radius:12px;padding:12px 6px;font-size:15px;font-weight:900}
+.btns .sm{flex:0 0 52px}
+.share{background:#FEE500;color:#191919}
+.copy{background:#E2E8F0;color:#0F172A}
+.fin{background:#0B4F82;color:#fff}
+.card.done .fin{background:#94A3B8}
+.del{background:#FEE2E2;color:#B91C1C}
+.mini{display:flex;gap:8px;margin-top:10px}
+.mini button{flex:1;border:1px dashed #94A3B8;background:none;color:#475569;border-radius:12px;padding:9px 4px;font-size:13px;font-weight:800}
+.ed{margin-top:10px}
+.ed label{display:block;font-size:12px;font-weight:900;color:#64748B;margin:10px 0 4px}
+.ed input,.ed textarea,.ed select{width:100%;border:2px solid #93C5FD;border-radius:12px;padding:10px 12px;font-size:16px;line-height:1.5;background:#fff;color:#0F172A}
+.ed .hint{font-size:12px;color:#94A3B8;margin-top:4px}
+.ed .imgrow{display:flex;gap:8px;align-items:center;margin-top:8px}
+.ed .imgrow img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+.ed .imgrow label{margin:0;flex:1;border:1px dashed #94A3B8;border-radius:12px;padding:10px;text-align:center;color:#475569;font-size:14px;font-weight:800}
+.ed .imgrow button{border:0;background:#FEE2E2;color:#B91C1C;border-radius:10px;padding:10px;font-weight:800}
+.fab{position:fixed;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));z-index:6;border:0;background:#F59E0B;color:#fff;font-size:18px;font-weight:900;padding:16px;border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.empty{text-align:center;color:#64748B;padding:40px 20px;font-size:15px;line-height:1.7}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#0F172A;color:#fff;font-size:14px;font-weight:800;padding:10px 16px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;white-space:nowrap}
+.toast.on{opacity:.92}
+.sheet{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:20;display:flex;align-items:flex-end}
+.sheet .box{background:#fff;width:100%;max-height:88vh;overflow:auto;border-radius:22px 22px 0 0;padding:20px 16px max(20px,env(safe-area-inset-bottom))}
+.sheet h2{font-size:19px;font-weight:900;margin-bottom:6px}
+.sheet p{font-size:13px;color:#64748B;line-height:1.5}
+.opt{display:block;width:100%;text-align:left;border:2px solid #E2E8F0;background:#fff;border-radius:14px;padding:12px 14px;margin-top:8px;font-size:15px;font-weight:800}
+.opt.on{border-color:#0B4F82;background:#EFF6FF}
+.opt small{display:block;font-size:12px;color:#64748B;font-weight:600;margin-top:2px}
+.evl{display:flex;gap:8px;align-items:center;border:2px solid #E2E8F0;border-radius:14px;padding:10px 12px;margin-top:8px}
+.evl.on{border-color:#0B4F82;background:#EFF6FF}
+.evl b{flex:1;font-size:15px}
+.evl button{border:0;background:#F1F5F9;border-radius:10px;padding:8px 10px;font-weight:800;font-size:13px}
+.foot{text-align:center;font-size:12px;color:#94A3B8;padding:6px 16px;line-height:1.8}
+</style>
+</head><body>
+<div class="hd" id="hd"></div>
+<div class="list" id="list"></div>
+<div class="foot" id="foot"></div>
+<button class="fab" id="fab" hidden>＋ 국면 추가</button>
+<div class="toast" id="toast"></div>
+<script>
+/* 국면 카드 — 행사(수학여행·수련회·체험학습)를 국면별로 나눠 할 일 체크 + 카톡 보낼 말을 미리 써 두고 한 번에 보내는 도구.
+   2026 꿈길 걷기 «진행 카드»(kkumgil/walk/lead.html)를 아무 행사에나 쓰게 일반화(10/29 사용자 요청).
+   ★ 서버 없음: 행사는 이 폰 localStorage(pc_v1), 첨부 사진은 IndexedDB(pc_img). 다른 선생님께는 «링크로 넘겨주기»(#e= 압축 JSON, 사진 제외). */
+var KEY = 'pc_v1';
+var TPL = {
+  trip: {name: '수학여행', days: [
+    ['1일차', [
+      ['07:30', '집결 · 출석', '담임: 출석 확인 → 불참·지각 보고|담당: 전체 인원 집계', '[집결]\n좋은 아침입니다 🙂\n담임 선생님들 출석 확인 후 불참·지각 학생 알려 주세요.\n○○:○○ 버스 탑승합니다.'],
+      ['07:50', '버스 탑승', '담임: 호차별 탑승 인원 확인 → 보고|담당: 전 호차 확인 후 출발', '[버스 탑승]\n호차별 탑승 인원 확인 후 보고 부탁드립니다.\n예) 「1호차 35명 탑승 이상 없음」\n안전벨트 꼭 매 주세요.'],
+      ['', '휴게소', '담임: 출발 전 인원 확인', '[휴게소]\n○○휴게소에서 ○○분 쉬어 갑니다 🚻\n○○:○○까지 버스로 돌아와 주세요.\n출발 전 호차별 인원 확인 부탁드립니다.'],
+      ['', '첫 방문지 도착', '담임: 하차 인원 확인|담당: 일정·집합 시각 안내', '[도착]\n○○ 도착했습니다!\n반별로 모여 인원 확인 후 이동합니다.\n집합: ○○:○○ ○○ 앞'],
+      ['12:00', '점심', '담임: 식당 앞 인원 확인 후 입장|담임: 식사 후 영수증 챙기기', '[점심]\n점심 맛있게 드세요 🍚\n선생님들 식사 후 영수증 꼭 챙겨 주세요.\n○○:○○ 출발합니다.'],
+      ['', '오후 견학', '담임: 장소 옮길 때마다 인원 확인', '[오후 일정]\n○○ 견학합니다.\n반과 함께 움직이고, 집합 시각 ○○:○○ 꼭 지켜 주세요.'],
+      ['17:00', '숙소 도착 · 방 배정', '담임: 방 배정표대로 입실 확인|담당: 비상구·안전 수칙 안내', '[숙소 도착]\n방 배정표대로 들어가 짐 풀고 ○○:○○까지 ○○로 모여요.\n비상구 위치 확인하고, 귀중품은 각자 챙기기!'],
+      ['18:00', '저녁', '담임: 인원 확인', '[저녁]\n○○:○○ 저녁 식사입니다 🍽\n식당으로 반별로 이동해 주세요.'],
+      ['21:30', '점호 · 취침', '담임: 방별 인원 확인 → 보고|담당: 순찰 순서 확인', '[점호]\n○○:○○ 방별 점호합니다.\n담임 선생님들 방별 인원 보고 부탁드립니다.\n취침 시간 이후에는 방 밖으로 나오지 않기.']
+    ]],
+    ['2일차', [
+      ['07:00', '기상 · 아침', '담임: 방별 기상 확인', '[기상]\n좋은 아침입니다 ☀️\n○○:○○ 아침 식사입니다. 반별로 식당에 모여요.'],
+      ['08:30', '버스 탑승', '담임: 호차별 탑승 인원 확인 → 보고', '[버스 탑승]\n호차별 탑승 인원 보고 부탁드립니다.\n○○:○○ 출발합니다.'],
+      ['', '오전 견학', '담임: 장소 옮길 때마다 인원 확인', '[오전 일정]\n○○ 견학합니다.\n집합 시각 ○○:○○ · 장소 ○○'],
+      ['12:00', '점심', '담임: 식사 후 영수증 챙기기', '[점심]\n점심 맛있게 드세요 🍚\n선생님들 영수증 꼭 챙겨 주세요.'],
+      ['', '오후 체험', '담임: 인원 확인', '[오후 일정]\n○○ 체험합니다.\n안전 수칙 꼭 지켜 주세요.'],
+      ['18:00', '저녁 · 레크리에이션', '담당: 진행 준비', '[저녁]\n저녁 식사 후 ○○:○○ ○○에서 레크리에이션이 있어요 🎉'],
+      ['21:30', '점호 · 취침', '담임: 방별 인원 확인 → 보고', '[점호]\n○○:○○ 방별 점호합니다.\n담임 선생님들 방별 인원 보고 부탁드립니다.']
+    ]],
+    ['3일차', [
+      ['07:00', '기상 · 퇴실 준비', '담임: 방 점검 · 두고 가는 물건 확인', '[퇴실 준비]\n좋은 아침입니다 ☀️\n방 정리하고 두고 가는 물건 없는지 확인해요.\n○○:○○까지 열쇠(카드) 반납!'],
+      ['09:00', '버스 탑승', '담임: 호차별 탑승 인원 확인 → 보고', '[버스 탑승]\n호차별 탑승 인원 보고 부탁드립니다.\n○○:○○ 출발합니다.'],
+      ['', '마지막 견학', '담임: 인원 확인', '[오전 일정]\n○○ 견학 후 점심 먹고 학교로 출발합니다.'],
+      ['12:00', '점심', '담임: 식사 후 영수증 챙기기', '[점심]\n마지막 점심이에요 🍚\n선생님들 영수증 꼭 챙겨 주세요. ○○:○○ 귀교 출발합니다.'],
+      ['', '귀교 출발', '담임: 호차별 탑승 인원 확인 → 보고', '[귀교 출발]\n호차별 탑승 인원 보고 부탁드립니다.\n학교 도착 예정 ○○:○○'],
+      ['', '학교 도착 · 해산', '담임: 도착 인원 확인 · 해산 지도|담임: 다친 학생 보건실·가정 연락', '[학교 도착]\n학교 도착했습니다. 담임 선생님들 인원 확인 후 해산 지도 부탁드립니다.\n모두 수고 많으셨습니다 🙏']
+    ]]
+  ]},
+  camp: {name: '수련회', days: [
+    ['1일차', [
+      ['08:00', '집결 · 출석', '담임: 출석 확인 → 불참·지각 보고', '[집결]\n좋은 아침입니다 🙂\n담임 선생님들 출석 확인 후 불참·지각 학생 알려 주세요.'],
+      ['08:20', '버스 탑승', '담임: 호차별 탑승 인원 확인 → 보고', '[버스 탑승]\n호차별 탑승 인원 확인 후 보고 부탁드립니다.\n안전벨트 꼭 매 주세요.'],
+      ['', '수련원 도착 · 입소식', '담임: 하차 인원 확인|담당: 입소식 진행', '[도착]\n수련원 도착했습니다!\n반별로 모여 인원 확인 후 입소식 장소(○○)로 이동합니다.'],
+      ['', '방 배정 · 안전교육', '담임: 입실 확인|담당: 비상구·안전 수칙', '[방 배정]\n방 배정표대로 짐 풀고 ○○:○○까지 ○○로 모여요.\n비상구 위치 꼭 확인!'],
+      ['12:00', '점심', '담임: 인원 확인', '[점심]\n점심 맛있게 드세요 🍚 ○○:○○ 프로그램 시작합니다.'],
+      ['', '오후 프로그램', '담임: 프로그램별 인원 확인', '[오후 프로그램]\n○○ 프로그램입니다. 활동복·운동화 확인!\n장소: ○○'],
+      ['18:00', '저녁', '담임: 인원 확인', '[저녁]\n○○:○○ 저녁 식사입니다 🍽'],
+      ['19:30', '저녁 프로그램 · 캠프파이어', '담당: 진행 준비|담임: 인원 확인', '[저녁 프로그램]\n○○:○○ ○○에서 캠프파이어가 있어요 🔥\n불 주변에서는 장난치지 않기!'],
+      ['22:00', '점호 · 취침', '담임: 방별 인원 확인 → 보고', '[점호]\n○○:○○ 방별 점호합니다.\n담임 선생님들 방별 인원 보고 부탁드립니다.\n취침 시간 이후 방 밖 이동 금지.']
+    ]],
+    ['2일차', [
+      ['07:00', '기상 · 아침', '담임: 방별 기상 확인', '[기상]\n좋은 아침입니다 ☀️ ○○:○○ 아침 식사예요.'],
+      ['', '오전 프로그램', '담임: 인원 확인', '[오전 프로그램]\n○○ 프로그램입니다. 장소: ○○'],
+      ['12:00', '점심', '담임: 인원 확인', '[점심]\n점심 맛있게 드세요 🍚'],
+      ['', '퇴소 준비 · 퇴소식', '담임: 방 점검 · 두고 가는 물건 확인', '[퇴소]\n방 정리하고 두고 가는 물건 없는지 확인해요.\n○○:○○ 퇴소식 후 버스 탑승합니다.'],
+      ['', '귀교 출발', '담임: 호차별 탑승 인원 확인 → 보고', '[귀교 출발]\n호차별 탑승 인원 보고 부탁드립니다.\n학교 도착 예정 ○○:○○'],
+      ['', '학교 도착 · 해산', '담임: 도착 인원 확인 · 해산 지도', '[학교 도착]\n학교 도착했습니다. 인원 확인 후 해산 지도 부탁드립니다.\n모두 수고 많으셨습니다 🙏']
+    ]]
+  ]},
+  day: {name: '현장체험학습 (1일)', days: [
+    ['당일', [
+      ['08:30', '집결 · 출석', '담임: 출석 확인 → 불참·지각 보고', '[집결]\n좋은 아침입니다 🙂\n담임 선생님들 출석 확인 후 불참·지각 학생 알려 주세요.'],
+      ['08:50', '버스 탑승', '담임: 호차별 탑승 인원 확인 → 보고', '[버스 탑승]\n호차별 탑승 인원 보고 부탁드립니다.\n안전벨트 꼭 매 주세요.'],
+      ['', '도착 · 활동 안내', '담임: 하차 인원 확인', '[도착]\n○○ 도착했습니다!\n반별로 인원 확인 후 활동 시작합니다. 집합 ○○:○○ ○○'],
+      ['12:00', '점심', '담임: 식사 후 영수증 챙기기', '[점심]\n점심 맛있게 드세요 🍚\n선생님들 영수증 꼭 챙겨 주세요.'],
+      ['', '오후 활동', '담임: 인원 확인', '[오후 활동]\n○○ 활동합니다. 집합 ○○:○○'],
+      ['', '귀교 · 해산', '담임: 탑승·도착 인원 확인', '[귀교]\n호차별 탑승 인원 보고 부탁드립니다.\n학교 도착 후 인원 확인하고 해산합니다. 수고하셨습니다 🙏']
+    ]]
+  ]},
+  blank: {name: '빈 행사', days: [['1일차', []]]}
+};
+
+function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+var D = ls(KEY) || {events: [], cur: null};
+var ED = null;          // 고치는 중 {pid, m:'p'|번호|'new'}
+var IMGS = {};          // id → objectURL
+function save() { ls(KEY, D); }
+function $(id) { return document.getElementById(id); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function toast(t) { var e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(function () { e.classList.remove('on'); }, 1900); }
+function ev() { return D.events.filter(function (e) { return e.id === D.cur; })[0] || null; }
+function dayOf(e) { return e.days.filter(function (d) { return d.id === e.day; })[0] || e.days[0]; }
+function fromTpl(k, name) {
+  var T = TPL[k];
+  var e = {id: uid(), name: name || T.name, days: T.days.map(function (d) {
+    return {id: uid(), label: d[0], phases: d[1].map(function (p) {
+      return {id: uid(), t: p[0], p: p[1], todo: p[2] ? p[2].split('|').map(function (x) { var i = x.indexOf(':'); return i > 0 ? [x.slice(0, i).trim(), x.slice(i + 1).trim()] : ['', x]; }) : [], msgs: p[3] ? [{text: p[3]}] : [], ck: [], done: ''};
+    })};
+  })};
+  e.day = e.days[0].id;
+  return e;
+}
+
+/* ── 사진(IndexedDB) ── */
+var idb = null;
+function db(cb) {
+  if (idb) return cb(idb);
+  try {
+    var r = indexedDB.open('pc_img', 1);
+    r.onupgradeneeded = function () { r.result.createObjectStore('img'); };
+    r.onsuccess = function () { idb = r.result; cb(idb); };
+    r.onerror = function () { cb(null); };
+  } catch (e) { cb(null); }
+}
+function putImg(id, blob, cb) { db(function (d) { if (!d) return cb(false); var t = d.transaction('img', 'readwrite'); t.objectStore('img').put(blob, id); t.oncomplete = function () { cb(true); }; t.onerror = function () { cb(false); }; }); }
+function getImg(id, cb) { db(function (d) { if (!d) return cb(null); var q = d.transaction('img').objectStore('img').get(id); q.onsuccess = function () { cb(q.result || null); }; q.onerror = function () { cb(null); }; }); }
+function delImg(id) { db(function (d) { if (d) d.transaction('img', 'readwrite').objectStore('img').delete(id); }); if (IMGS[id]) { URL.revokeObjectURL(IMGS[id]); delete IMGS[id]; } }
+function shrink(file, cb) {   // 긴 변 1280px JPEG 로 줄여 저장(카톡 전송도 빨라진다)
+  var u = URL.createObjectURL(file), im = new Image();
+  im.onload = function () {
+    var s = Math.min(1, 1280 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+    c.width = Math.round(im.width * s); c.height = Math.round(im.height * s);
+    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u);
+    c.toBlob(function (b) { cb(b || file); }, 'image/jpeg', 0.85);
+  };
+  im.onerror = function () { URL.revokeObjectURL(u); cb(file); };
+  im.src = u;
+}
+function fillImgs() {
+  document.querySelectorAll('img[data-img]').forEach(function (im) {
+    var id = im.dataset.img;
+    if (IMGS[id]) { im.src = IMGS[id]; return; }
+    getImg(id, function (b) { if (b) { IMGS[id] = URL.createObjectURL(b); im.src = IMGS[id]; } else im.remove(); });
+  });
+}
+
+/* ── 그리기 ── */
+function render() {
+  var e = ev();
+  if (!e) return home();
+  var d = dayOf(e); e.day = d.id;
+  var arr = d.phases, nDone = arr.filter(function (x) { return x.done; }).length;
+  $('hd').innerHTML = '<div class="hrow"><h1>🧭 ' + esc(e.name) + '</h1><button class="hb" id="menuB">행사 ▾</button></div>'
+    + '<div class="sub">' + esc(d.label) + ' · 국면 ' + arr.length + '개 · ' + nDone + ' 완료</div>'
+    + '<div class="seg">' + e.days.map(function (x) { return '<button data-day="' + x.id + '" class="' + (x.id === d.id ? 'on' : '') + '">' + esc(x.label) + '</button>'; }).join('')
+    + '<button class="add" data-day="+">＋ 날</button></div>'
+    + '<div class="bar"><i style="width:' + (arr.length ? nDone / arr.length * 100 : 0) + '%"></i></div>';
+  var nowSet = false, h = '';
+  if (!arr.length) h = '<div class="empty">아직 국면이 없어요.<br>아래 <b>＋ 국면 추가</b>를 눌러<br>시각·이름·할 일·카톡 메시지를 써 보세요.</div>';
+  arr.forEach(function (x, i) {
+    var now = !x.done && !nowSet; if (now) nowSet = true;
+    h += '<div class="card' + (x.done ? ' done' : '') + (now ? ' now' : '') + '" id="c' + x.id + '">';
+    if (ED && ED.pid === x.id && ED.m === 'p') {
+      h += '<div class="body ed" style="padding-top:10px"><label>시각 · 지점 (비워도 돼요)</label><input id="e_t" value="' + esc(x.t) + '" placeholder="예) 07:30 / 휴게소">'
+        + '<label>국면 이름</label><input id="e_p" value="' + esc(x.p) + '" placeholder="예) 버스 탑승">'
+        + '<label>할 일 (한 줄에 하나)</label><textarea id="e_todo" rows="4" placeholder="담임: 탑승 인원 확인&#10;담당: 출발 신호">' + esc(x.todo.map(function (t) { return (t[0] ? t[0] + ': ' : '') + t[1]; }).join('\n')) + '</textarea>'
+        + '<div class="hint">«누가: 할 일» 으로 쓰면 앞에 이름표가 붙어요</div>'
+        + '<div class="btns"><button class="copy" data-a="up" data-id="' + x.id + '">▲ 위로</button><button class="copy" data-a="down" data-id="' + x.id + '">▼ 아래로</button></div>'
+        + '<div class="btns"><button class="copy" data-a="cancel">취소</button><button class="fin" data-a="psave" data-id="' + x.id + '">저장</button></div>'
+        + '<div class="btns"><button class="del" data-a="pdel" data-id="' + x.id + '">🗑 이 국면 삭제</button></div></div></div>';
+      return;
+    }
+    h += '<div class="ch"><div class="num">' + (i + 1) + '</div><div class="ct"><b>' + esc(x.p) + '</b><small>' + esc(x.t) + (x.done ? (x.t ? ' · ' : '') + '✅ ' + x.done + ' 완료' : '') + '</small></div>'
+      + '<button class="pen" data-a="pedit" data-id="' + x.id + '" aria-label="국면 고치기">✏️</button></div><div class="body">';
+    if (x.todo.length) h += '<ul class="todo">' + x.todo.map(function (t, j) {
+      var ok = (x.ck || []).indexOf(j) >= 0;
+      return '<li class="' + (ok ? 'ok' : '') + '" data-id="' + x.id + '" data-j="' + j + '"><span class="bx">' + (ok ? '✓' : '') + '</span><span class="tx">' + (t[0] ? '<span class="tg">' + esc(t[0]) + '</span>' : '') + esc(t[1]) + '</span></li>';
+    }).join('') + '</ul>';
+    x.msgs.forEach(function (m, k) {
+      if (ED && ED.pid === x.id && ED.m === k) { h += msgEditor(x, m, k); return; }
+      h += (m.img ? '<img class="img" data-img="' + m.img + '" alt="">' : '')
+        + '<div class="msg">' + esc(m.text) + '</div>'
+        + '<div class="btns"><button class="share" data-a="share" data-id="' + x.id + '" data-k="' + k + '">📤 카톡 보내기</button>'
+        + '<button class="copy" data-a="copy" data-id="' + x.id + '" data-k="' + k + '">📋 복사</button>'
+        + '<button class="copy sm" data-a="medit" data-id="' + x.id + '" data-k="' + k + '">✏️</button></div>';
+    });
+    if (ED && ED.pid === x.id && ED.m === 'new') h += msgEditor(x, {text: ''}, 'new');
+    h += '<div class="mini"><button data-a="mnew" data-id="' + x.id + '">＋ 메시지 추가</button><button data-a="pnew" data-id="' + x.id + '">＋ 아래에 국면</button></div>'
+      + '<div class="btns"><button class="fin" data-a="fin" data-id="' + x.id + '">' + (x.done ? '↩ 완료 취소' : '✅ 이 국면 완료') + '</button></div></div></div>';
+  });
+  $('list').innerHTML = h;
+  $('fab').hidden = !!ED;
+  $('foot').innerHTML = '행사·체크·사진은 이 폰에만 저장돼요 · 다른 선생님께는 «행사 ▾ → 링크로 넘겨주기»';
+  fillImgs();
+  var f = document.querySelector('.ed textarea, .ed input'); if (f && ED && ED.focus) { f.focus(); ED.focus = false; }
+}
+function msgEditor(x, m, k) {
+  return '<div class="ed"><label>카톡 메시지</label><textarea id="e_msg" rows="7" placeholder="[제목]&#10;내용은 다음 줄부터 써요">' + esc(m.text) + '</textarea>'
+    + '<div class="hint">첫 줄에 [제목], 내용은 다음 줄부터 쓰면 카톡에서 읽기 좋아요 · ○○ 는 그때그때 채울 칸</div>'
+    + '<div class="imgrow">' + (m.img ? '<img data-img="' + m.img + '" alt=""><button data-a="imgdel" data-id="' + x.id + '" data-k="' + k + '">사진 빼기</button>' : '')
+    + '<label>📷 사진 ' + (m.img ? '바꾸기' : '첨부 (선택)') + '<input type="file" accept="image/*" id="e_img" hidden></label></div>'
+    + '<div class="btns"><button class="copy" data-a="cancel">취소</button><button class="fin" data-a="msave" data-id="' + x.id + '" data-k="' + k + '">' + (k === 'new' ? '추가' : '저장') + '</button></div>'
+    + (k === 'new' ? '' : '<div class="btns"><button class="del" data-a="mdel" data-id="' + x.id + '" data-k="' + k + '">🗑 이 메시지 삭제</button></div>') + '</div>';
+}
+function home() {
+  $('hd').innerHTML = '<div class="hrow"><h1>🧭 국면 카드</h1></div><div class="sub">행사를 국면별로 — 할 일 체크 + 카톡 보낼 말</div>';
+  $('fab').hidden = true;
+  $('foot').textContent = '';
+  $('list').innerHTML = '<div class="empty">수학여행·수련회·체험학습을<br>시간 순서(국면)대로 나눠 두고,<br>그때마다 카톡 메시지를 한 번에 보내요.</div>'
+    + '<div class="btns" style="margin:0"><button class="fin" data-a="newev">＋ 새 행사 만들기</button></div>'
+    + (D.events.length ? '<div style="margin-top:16px">' + D.events.map(function (e) { return '<div class="evl"><b>' + esc(e.name) + '</b><button data-a="open" data-id="' + e.id + '">열기</button></div>'; }).join('') + '</div>' : '');
+}
+
+/* ── 시트(아래에서 올라오는 창) ── */
+function sheet(html, bind) {
+  var s = document.createElement('div'); s.className = 'sheet';
+  s.innerHTML = '<div class="box">' + html + '</div>';
+  s.onclick = function (e) { if (e.target === s) s.remove(); };
+  document.body.appendChild(s); bind(s); return s;
+}
+function newEventSheet() {
+  var pick = 'trip';
+  sheet('<h2>새 행사 만들기</h2><p>기본 틀을 고르면 국면과 메시지가 미리 들어가요. 다 고칠 수 있어요.</p>'
+    + '<div class="ed"><label>행사 이름</label><input id="ne_name" placeholder="예) 2학년 수학여행 (11/4~6)"></div>'
+    + Object.keys(TPL).map(function (k) {
+        var T = TPL[k], n = T.days.reduce(function (a, d) { return a + d[1].length; }, 0);
+        return '<button class="opt' + (k === pick ? ' on' : '') + '" data-k="' + k + '">' + T.name + '<small>' + (n ? T.days.length + '일 · 국면 ' + n + '개' : '국면 없이 처음부터') + '</small></button>';
+      }).join('')
+    + '<div class="btns" style="margin-top:14px"><button class="copy" data-x="no">취소</button><button class="fin" data-x="ok">만들기</button></div>', function (s) {
+    s.querySelectorAll('.opt').forEach(function (b) { b.onclick = function () { pick = b.dataset.k; s.querySelectorAll('.opt').forEach(function (o) { o.classList.toggle('on', o === b); }); }; });
+    s.querySelector('[data-x=no]').onclick = function () { s.remove(); };
+    s.querySelector('[data-x=ok]').onclick = function () {
+      var e = fromTpl(pick, s.querySelector('#ne_name').value.trim() || TPL[pick].name);
+      D.events.unshift(e); D.cur = e.id; save(); s.remove(); ED = null; render(); window.scrollTo(0, 0);
+      toast('«' + e.name + '» 만들었어요');
+    };
+  });
+}
+function menuSheet() {
+  var e = ev(), d = dayOf(e);
+  sheet('<h2>행사</h2>'
+    + D.events.map(function (x) { return '<div class="evl' + (x.id === e.id ? ' on' : '') + '"><b>' + esc(x.name) + '</b>' + (x.id === e.id ? '' : '<button data-open="' + x.id + '">열기</button>') + '</div>'; }).join('')
+    + '<button class="opt" data-x="new">＋ 새 행사 만들기</button>'
+    + '<h2 style="margin-top:18px">«' + esc(e.name) + '»</h2>'
+    + '<button class="opt" data-x="link">🔗 링크로 넘겨주기<small>다른 선생님 폰에서 열면 이 행사가 그대로 복사돼요 (사진 제외)</small></button>'
+    + '<button class="opt" data-x="rename">✏️ 행사 이름 바꾸기</button>'
+    + '<button class="opt" data-x="dayname">📅 «' + esc(d.label) + '» 탭 이름 바꾸기</button>'
+    + (e.days.length > 1 ? '<button class="opt" data-x="daydel">🗑 «' + esc(d.label) + '» 탭 지우기</button>' : '')
+    + '<button class="opt" data-x="reset">↺ 체크·완료 표시만 지우기<small>예행 연습 뒤 실제 날에 쓰기 전에</small></button>'
+    + '<button class="opt" data-x="del" style="color:#B91C1C">🗑 이 행사 삭제</button>'
+    + '<div class="btns" style="margin-top:14px"><button class="copy" data-x="close">닫기</button></div>', function (s) {
+    s.querySelectorAll('[data-open]').forEach(function (b) { b.onclick = function () { D.cur = b.dataset.open; save(); s.remove(); ED = null; render(); }; });
+    s.querySelectorAll('[data-x]').forEach(function (b) {
+      b.onclick = function () {
+        var x = b.dataset.x; s.remove();
+        if (x === 'new') newEventSheet();
+        else if (x === 'link') shareLink(e);
+        else if (x === 'rename') { var n = prompt('행사 이름', e.name); if (n && n.trim()) { e.name = n.trim(); save(); render(); } }
+        else if (x === 'dayname') { var m = prompt('탭 이름', d.label); if (m && m.trim()) { d.label = m.trim(); save(); render(); } }
+        else if (x === 'daydel') { if (confirm('«' + d.label + '» 탭과 그 안의 국면을 모두 지울까요?')) { e.days = e.days.filter(function (y) { return y !== d; }); e.day = e.days[0].id; save(); render(); } }
+        else if (x === 'reset') { if (confirm('이 행사의 체크·완료 표시를 모두 지울까요? (내용은 그대로)')) { e.days.forEach(function (y) { y.phases.forEach(function (p) { p.ck = []; p.done = ''; }); }); save(); render(); } }
+        else if (x === 'del') { if (confirm('«' + e.name + '» 행사를 삭제할까요? 되돌릴 수 없어요.')) { D.events = D.events.filter(function (y) { return y !== e; }); D.cur = D.events[0] ? D.events[0].id : null; save(); render(); } }
+      };
+    });
+  });
+}
+
+/* ── 링크로 넘겨주기: #e=<deflate+base64url> ── */
+function b64u(buf) { var s = '', a = new Uint8Array(buf); for (var i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function unb64u(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; var b = atob(s), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
+function packEvent(e) {
+  return {n: e.name, d: e.days.map(function (d) { return [d.label, d.phases.map(function (p) { return [p.t, p.p, p.todo, p.msgs.map(function (m) { return m.text; })]; })]; })};
+}
+function shareLink(e) {
+  var json = JSON.stringify(packEvent(e));
+  var done = function (code) {
+    var url = location.origin + location.pathname + '#e=' + code;
+    var text = '[국면 카드] «' + e.name + '»\n아래 링크를 열면 선생님 폰에 이 행사가 복사돼요 👇\n' + url;
+    if (navigator.share) navigator.share({text: text}).catch(function () {});
+    else copyText(text, '링크를 복사했어요');
+  };
+  if (window.CompressionStream) {
+    new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer().then(function (b) { done('z' + b64u(b)); }, function () { done('j' + b64u(new TextEncoder().encode(json))); });
+  } else done('j' + b64u(new TextEncoder().encode(json)));
+}
+function readLink() {
+  var m = location.hash.match(/^#e=([zj])([\w-]+)/);
+  if (!m) return;
+  history.replaceState(null, '', location.pathname);
+  var bytes = unb64u(m[2]);
+  var p = m[1] === 'z' && window.DecompressionStream
+    ? new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text()
+    : Promise.resolve(new TextDecoder().decode(bytes));
+  p.then(function (txt) {
+    var o = JSON.parse(txt);
+    var e = {id: uid(), name: o.n, days: o.d.map(function (d) { return {id: uid(), label: d[0], phases: d[1].map(function (q) { return {id: uid(), t: q[0], p: q[1], todo: q[2] || [], msgs: (q[3] || []).map(function (t) { return {text: t}; }), ck: [], done: ''}; })}; })};
+    e.day = e.days[0].id;
+    D.events.unshift(e); D.cur = e.id; save(); render(); toast('«' + e.name + '» 행사를 받았어요');
+  }).catch(function () { toast('링크를 읽지 못했어요'); });
+}
+
+/* ── 보내기·복사 ── */
+function copyText(t, msg) {
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t).then(function () { toast(msg || '복사했어요 — 카톡에 붙여 넣으세요'); }, function () { oldCopy(t, msg); });
+  oldCopy(t, msg);
+}
+function oldCopy(t, msg) {
+  var a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select();
+  try { document.execCommand('copy'); toast(msg || '복사했어요'); } catch (e) { toast('복사가 안 돼요 — 길게 눌러 복사해 주세요'); }
+  a.remove();
+}
+function share(m) {
+  if (!navigator.share) { copyText(m.text); return; }
+  // 카톡은 그림+글을 같이 받으면 글을 버리기도 해서 글은 클립보드에도 넣어 둔다
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(m.text).catch(function () {});
+  if (!m.img) { navigator.share({text: m.text}).catch(function () {}); return; }
+  getImg(m.img, function (b) {
+    if (!b) { navigator.share({text: m.text}).catch(function () {}); return; }
+    var d = {files: [new File([b], '사진.jpg', {type: 'image/jpeg'})], text: m.text};
+    if (navigator.canShare && !navigator.canShare(d)) d = {text: m.text};
+    navigator.share(d).then(function () { if (d.files) toast('글이 빠졌으면 카톡 입력창에 붙여 넣기 하세요'); }).catch(function () {});
+  });
+}
+
+/* ── 누르기 ── */
+function P(id) { var d = dayOf(ev()); for (var i = 0; i < d.phases.length; i++) if (d.phases[i].id === id) return {L: d.phases, i: i, x: d.phases[i]}; }
+var pendingImg = null;    // 편집 중 고른 사진 {blob, url}
+document.addEventListener('change', function (e) {
+  if (e.target.id !== 'e_img' || !e.target.files[0]) return;
+  shrink(e.target.files[0], function (b) {
+    pendingImg = {blob: b};
+    var row = e.target.closest('.imgrow'), im = row.querySelector('img');
+    if (!im) { im = document.createElement('img'); row.insertBefore(im, row.firstChild); }
+    im.removeAttribute('data-img'); im.src = URL.createObjectURL(b);
+    toast('사진을 골랐어요 — 저장을 눌러 주세요');
+  });
+});
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-a],[data-day],#menuB,#fab');
+  var li = e.target.closest('li[data-j]');
+  if (li && !ED) {
+    var F0 = P(li.dataset.id), j = +li.dataset.j, ck = F0.x.ck || (F0.x.ck = []), q = ck.indexOf(j);
+    if (q >= 0) ck.splice(q, 1); else ck.push(j);
+    save(); render(); return;
+  }
+  if (!b) return;
+  if (b.id === 'menuB') return menuSheet();
+  if (b.id === 'fab') {
+    var d0 = dayOf(ev()), np = {id: uid(), t: '', p: '', todo: [], msgs: [], ck: [], done: ''};
+    d0.phases.push(np); ED = {pid: np.id, m: 'p', focus: true, fresh: true}; save(); render();
+    var c = $('c' + np.id); if (c) window.scrollTo({top: c.offsetTop - 140, behavior: 'smooth'});
+    return;
+  }
+  if (b.dataset.day) {
+    var E = ev();
+    if (b.dataset.day === '+') { var n = prompt('새 탭 이름', (E.days.length + 1) + '일차'); if (!n) return; var nd = {id: uid(), label: n.trim(), phases: []}; E.days.push(nd); E.day = nd.id; }
+    else E.day = b.dataset.day;
+    ED = null; save(); render(); window.scrollTo(0, 0); return;
+  }
+  var a = b.dataset.a, id = b.dataset.id, k = b.dataset.k, F = id ? P(id) : null;
+  if (a === 'newev') return newEventSheet();
+  if (a === 'open') { D.cur = id; save(); return render(); }
+  if (a === 'share') return share(F.x.msgs[+k]);
+  if (a === 'copy') return copyText(F.x.msgs[+k].text);
+  if (a === 'cancel') {
+    if (ED && ED.fresh) { var G = P(ED.pid); if (G && !G.x.p && !G.x.msgs.length) G.L.splice(G.i, 1); save(); }
+    ED = null; pendingImg = null; return render();
+  }
+  if (a === 'medit') { ED = {pid: id, m: +k, focus: true}; pendingImg = null; return render(); }
+  if (a === 'mnew') { ED = {pid: id, m: 'new', focus: true}; pendingImg = null; return render(); }
+  if (a === 'pedit') { ED = {pid: id, m: 'p', focus: true}; return render(); }
+  if (a === 'pnew') { var nq = {id: uid(), t: '', p: '', todo: [], msgs: [], ck: [], done: ''}; F.L.splice(F.i + 1, 0, nq); ED = {pid: nq.id, m: 'p', focus: true, fresh: true}; save(); return render(); }
+  if (a === 'msave') {
+    var txt = $('e_msg').value.replace(/\s+$/, '');
+    var m = k === 'new' ? {text: ''} : F.x.msgs[+k];
+    if (!txt && !pendingImg && !m.img) { ED = null; return render(); }
+    m.text = txt;
+    var fin = function () { if (k === 'new') F.x.msgs.push(m); ED = null; pendingImg = null; save(); toast(k === 'new' ? '메시지를 추가했어요' : '저장했어요'); render(); };
+    if (pendingImg) { var iid = 'i' + uid(); if (m.img) delImg(m.img); putImg(iid, pendingImg.blob, function (ok) { if (ok) m.img = iid; else toast('사진 저장이 안 됐어요'); fin(); }); }
+    else fin();
+    return;
+  }
+  if (a === 'imgdel') { var mm = F.x.msgs[+k]; if (mm && mm.img) { delImg(mm.img); delete mm.img; save(); } pendingImg = null; return render(); }
+  if (a === 'mdel') { if (!confirm('이 메시지를 지울까요?')) return; var dm = F.x.msgs.splice(+k, 1)[0]; if (dm && dm.img) delImg(dm.img); ED = null; save(); return render(); }
+  if (a === 'psave') {
+    F.x.t = $('e_t').value.trim(); F.x.p = $('e_p').value.trim() || '새 국면';
+    F.x.todo = $('e_todo').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
+      var mt = l.match(/^([^:：]{1,10})[:：]\s*(.+)$/); return mt ? [mt[1].trim(), mt[2]] : ['', l];
+    });
+    F.x.ck = [];
+    var wasFresh = ED.fresh;
+    ED = wasFresh && !F.x.msgs.length ? {pid: F.x.id, m: 'new', focus: true} : null;   // 새 국면이면 바로 메시지 쓰기로
+    save(); toast('저장했어요'); return render();
+  }
+  if (a === 'up' || a === 'down') {
+    var to = F.i + (a === 'up' ? -1 : 1); if (to < 0 || to >= F.L.length) return;
+    F.L.splice(to, 0, F.L.splice(F.i, 1)[0]); save(); return render();
+  }
+  if (a === 'pdel') { if (!confirm('«' + (F.x.p || '새 국면') + '» 국면을 지울까요?')) return; F.x.msgs.forEach(function (q) { if (q.img) delImg(q.img); }); F.L.splice(F.i, 1); ED = null; save(); return render(); }
+  if (a === 'fin') {
+    if (F.x.done) F.x.done = '';
+    else { var t = new Date(); F.x.done = ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2); }
+    save(); render();
+    if (F.x.done) { var n2 = document.querySelector('.card.now'); if (n2) window.scrollTo({top: n2.offsetTop - 140, behavior: 'smooth'}); }
+  }
+});
+window.addEventListener('hashchange', readLink);
+readLink();
+render();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+</script>
+</body></html>
