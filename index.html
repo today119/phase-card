@@ -376,8 +376,8 @@ function addPacked(o) {
 }
 /* 계획서로 미리 만들어 둔 행사 (ev/*.json) — 홈·행사 메뉴에서 눌러 받는다 */
 var PRESETS = [
-  {f: 'kkumgil2026', name: '🚶 꿈길 걷기 (1일차 1학년 도보 · 2일차)', sub: '10/30~31 · 일정 35개'},
   {f: 'kkumgil2026g2', name: '🚌 2학년 인천바로알기 (꿈길 1일차)', sub: '10/30 · 일정 10개 · A·B·C 코스 스탬프'},
+  {f: 'kkumgil2026', name: '🏝 꿈길 걷기 2일차', sub: '10/31 · 무의도~용유 · 일정 15개'},
   {f: 'jeju2026', name: '✈️ 2학년 제주 수학여행', sub: '11/5~7 · 일정 27개 · 비상 탭'},
   {f: 'pyeongchang2026', name: '🏔 1학년 평창 수련회', sub: '11/4~6 · 일정 21개 · 비상 탭'}
 ];
@@ -526,6 +526,14 @@ document.addEventListener('click', function (e) {
   }
 });
 /* 10/29: 링크 열기 + 가져오기 버튼이 겹쳐 같은 행사가 2개씩 쌓였다 → 내용이 똑같고 손대지 않은(체크·완료 없음) 사본은 하나만 남긴다 */
+/* 10/29: 꿈길 1학년 1일차는 진행 카드(lead.html)로 쓰기로 → 예전에 받은 손 안 댄 «1학년 도보» 사본은 지운다 */
+var RETIRED = ['꿈길 걷기 · 1학년 도보 (10/30~31)'];
+D.events = D.events.filter(function (e) {
+  if (RETIRED.indexOf(e.name) < 0 || e.edited) return true;
+  return e.days.some(function (d) { return d.phases.some(function (p) { return (p.ck && p.ck.length) || p.done; }); });
+});
+if (!D.events.some(function (e) { return e.id === D.cur; })) D.cur = null;
+save();
 (function dedupe() {
   var seen = {}, n0 = D.events.length;
   D.events = D.events.filter(function (e) {

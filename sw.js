@@ -1,5 +1,5 @@
 /* 국면 카드 — 화면은 늘 새것(네트워크 먼저), 끊기면 저장해 둔 것 */
-const V = 'pc-v15';
+const V = 'pc-v16';
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(V).then(c => c.addAll(['./', './index.html', './manifest.json']).catch(() => {}))); });
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', e => {
