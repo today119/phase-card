@@ -165,6 +165,7 @@ var TPL = {
 
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
 var D = ls(KEY) || {events: [], cur: null};
+var HOME = true;        // 처음엔 늘 첫 화면(행사 목록) — 10/29 «바로 제주로 뜨는데?»
 var ED = null;          // 고치는 중 {pid, m:'p'|번호|'new'}
 var IMGS = {};          // id → objectURL
 function save() { ls(KEY, D); }
@@ -221,10 +222,10 @@ function fillImgs() {
 /* ── 그리기 ── */
 function render() {
   var e = ev();
-  if (!e) return home();
+  if (HOME || !e) return home();
   var d = dayOf(e); e.day = d.id;
   var arr = d.phases, nDone = arr.filter(function (x) { return x.done; }).length;
-  $('hd').innerHTML = '<div class="hrow"><h1>🧭 ' + esc(e.name) + '</h1><button class="hb" id="menuB">행사 ▾</button></div>'
+  $('hd').innerHTML = '<div class="hrow"><button class="hb" id="homeB" aria-label="행사 목록">🏠</button><h1>' + esc(e.name) + '</h1><button class="hb" id="menuB">행사 ▾</button></div>'
     + '<div class="sub">' + esc(d.label) + ' · 일정 ' + arr.length + '개 · ' + nDone + ' 완료</div>'
     + '<div class="seg">' + e.days.map(function (x) { return '<button data-day="' + x.id + '" class="' + (x.id === d.id ? 'on' : '') + '">' + esc(x.label) + '</button>'; }).join('')
     + '<button class="add" data-day="+">＋ 날</button></div>'
@@ -284,7 +285,11 @@ function home() {
   $('list').innerHTML = '<div class="empty">수학여행·수련회·체험학습을<br>시간 순서(일정)대로 나눠 두고,<br>그때마다 카톡 메시지를 한 번에 보내요.</div>'
     + '<div class="btns" style="margin:0"><button class="fin" data-a="newev">＋ 새 행사 만들기</button></div>'
     + presetHTML()
-    + (D.events.length ? '<div style="margin-top:16px">' + D.events.map(function (e) { return '<div class="evl"><b>' + esc(e.name) + '</b><button data-a="open" data-id="' + e.id + '">열기</button></div>'; }).join('') + '</div>' : '');
+    + (D.events.length ? '<div class="ed" style="margin-top:18px"><label>내 행사</label></div>' + D.events.map(function (e) {
+        var n = e.days.reduce(function (a, d) { return a + d.phases.length; }, 0);
+        return '<div class="evl"><b>' + esc(e.name) + '<small style="display:block;font-size:12px;color:#64748B;font-weight:600">' + e.days.length + '일 · 일정 ' + n + '개</small></b>'
+          + '<button data-a="open" data-id="' + e.id + '">열기</button><button data-a="evdel" data-id="' + e.id + '" style="background:#FEE2E2;color:#B91C1C">🗑</button></div>';
+      }).join('') : '')
 }
 
 /* ── 시트(아래에서 올라오는 창) ── */
@@ -307,7 +312,7 @@ function newEventSheet() {
     s.querySelector('[data-x=no]').onclick = function () { s.remove(); };
     s.querySelector('[data-x=ok]').onclick = function () {
       var e = fromTpl(pick, s.querySelector('#ne_name').value.trim() || TPL[pick].name);
-      D.events.unshift(e); D.cur = e.id; save(); s.remove(); ED = null; render(); window.scrollTo(0, 0);
+      D.events.unshift(e); HOME = false; D.cur = e.id; save(); s.remove(); ED = null; render(); window.scrollTo(0, 0);
       toast('«' + e.name + '» 만들었어요');
     };
   });
@@ -326,7 +331,7 @@ function menuSheet() {
     + '<button class="opt" data-x="reset">↺ 체크·완료 표시만 지우기<small>예행 연습 뒤 실제 날에 쓰기 전에</small></button>'
     + '<button class="opt" data-x="del" style="color:#B91C1C">🗑 이 행사 삭제</button>'
     + '<div class="btns" style="margin-top:14px"><button class="copy" data-x="close">닫기</button></div>', function (s) {
-    s.querySelectorAll('[data-open]').forEach(function (b) { b.onclick = function () { D.cur = b.dataset.open; save(); s.remove(); ED = null; render(); }; });
+    s.querySelectorAll('[data-open]').forEach(function (b) { b.onclick = function () { HOME = false; D.cur = b.dataset.open; save(); s.remove(); ED = null; render(); }; });
     s.querySelectorAll('[data-x]').forEach(function (b) {
       b.onclick = function () {
         var x = b.dataset.x; s.remove();
@@ -336,7 +341,7 @@ function menuSheet() {
         else if (x === 'dayname') { var m = prompt('탭 이름', d.label); if (m && m.trim()) { d.label = m.trim(); save(); render(); } }
         else if (x === 'daydel') { if (confirm('«' + d.label + '» 탭과 그 안의 일정을 모두 지울까요?')) { e.days = e.days.filter(function (y) { return y !== d; }); e.day = e.days[0].id; save(); render(); } }
         else if (x === 'reset') { if (confirm('이 행사의 체크·완료 표시를 모두 지울까요? (내용은 그대로)')) { e.days.forEach(function (y) { y.phases.forEach(function (p) { p.ck = []; p.done = ''; }); }); save(); render(); } }
-        else if (x === 'del') { if (confirm('«' + e.name + '» 행사를 삭제할까요? 되돌릴 수 없어요.')) { D.events = D.events.filter(function (y) { return y !== e; }); D.cur = D.events[0] ? D.events[0].id : null; save(); render(); } }
+        else if (x === 'del') { if (confirm('«' + e.name + '» 행사를 삭제할까요? 되돌릴 수 없어요.')) { D.events = D.events.filter(function (y) { return y !== e; }); D.cur = null; HOME = true; save(); render(); } }
       };
     });
   });
@@ -363,12 +368,12 @@ function shareLink(e) {
 function addPacked(o) {
   var e = {id: uid(), name: o.n, days: o.d.map(function (d) { return {id: uid(), label: d[0], phases: d[1].map(function (q) { return {id: uid(), t: q[0], p: q[1], todo: q[2] || [], msgs: (q[3] || []).map(function (t) { return {text: t}; }), ck: [], done: ''}; })}; })};
   e.day = e.days[0].id;
-  D.events.unshift(e); D.cur = e.id; save(); ED = null; render(); toast('«' + e.name + '» 행사를 받았어요');
+  D.events.unshift(e); HOME = false; D.cur = e.id; save(); ED = null; render(); toast('«' + e.name + '» 행사를 받았어요');
 }
 /* 계획서로 미리 만들어 둔 행사 (ev/*.json) — 홈·행사 메뉴에서 눌러 받는다 */
 var PRESETS = [
-  {f: 'jeju2026', name: '✈️ 2학년 제주 수학여행', sub: '11/5~7 · 일정 28개 · 비상 탭'},
-  {f: 'pyeongchang2026', name: '🏔 1학년 평창 수련회', sub: '11/4~6 · 일정 24개 · 비상 탭'}
+  {f: 'jeju2026', name: '✈️ 2학년 제주 수학여행', sub: '11/5~7 · 일정 27개 · 비상 탭'},
+  {f: 'pyeongchang2026', name: '🏔 1학년 평창 수련회', sub: '11/4~6 · 일정 21개 · 비상 탭'}
 ];
 function presetHTML() {
   return '<div class="ed" style="margin-top:18px"><label>계획서로 만든 행사 가져오기</label></div>'
@@ -378,7 +383,7 @@ function loadPreset(name) {
   fetch('ev/' + name + '.json', {cache: 'no-store'}).then(function (r) { return r.json(); }).then(function (o) {
     var have = D.events.filter(function (e) { return e.name === o.n; })[0];
     if (have) {
-      if (!confirm('«' + o.n + '» 행사가 이미 있어요. 새로 하나 더 받을까요?\n(취소하면 있던 행사를 열어요)')) { D.cur = have.id; save(); ED = null; render(); return; }
+      if (!confirm('«' + o.n + '» 행사가 이미 있어요. 새로 하나 더 받을까요?\n(취소하면 있던 행사를 열어요)')) { HOME = false; D.cur = have.id; save(); ED = null; render(); return; }
     }
     addPacked(o);
   }).catch(function () { toast('행사를 받지 못했어요 — 인터넷을 확인해 주세요'); });
@@ -440,7 +445,7 @@ document.addEventListener('change', function (e) {
 document.addEventListener('click', function (e) {
   var pr = e.target.closest('[data-pre]');
   if (pr) { var sh = pr.closest('.sheet'); if (sh) sh.remove(); return loadPreset(pr.dataset.pre); }
-  var b = e.target.closest('[data-a],[data-day],#menuB,#fab');
+  var b = e.target.closest('[data-a],[data-day],#menuB,#homeB,#fab');
   var li = e.target.closest('li[data-j]');
   if (li && !ED) {
     var F0 = P(li.dataset.id), j = +li.dataset.j, ck = F0.x.ck || (F0.x.ck = []), q = ck.indexOf(j);
@@ -449,6 +454,7 @@ document.addEventListener('click', function (e) {
   }
   if (!b) return;
   if (b.id === 'menuB') return menuSheet();
+  if (b.id === 'homeB') { HOME = true; ED = null; render(); window.scrollTo(0, 0); return; }
   if (b.id === 'fab') {
     var d0 = dayOf(ev()), np = {id: uid(), t: '', p: '', todo: [], msgs: [], ck: [], done: ''};
     d0.phases.push(np); ED = {pid: np.id, m: 'p', focus: true, fresh: true}; save(); render();
@@ -461,9 +467,14 @@ document.addEventListener('click', function (e) {
     else E.day = b.dataset.day;
     ED = null; save(); render(); window.scrollTo(0, 0); return;
   }
-  var a = b.dataset.a, id = b.dataset.id, k = b.dataset.k, F = id ? P(id) : null;
+  var a = b.dataset.a, id = b.dataset.id, k = b.dataset.k, F = (id && ev() && !HOME) ? P(id) : null;
   if (a === 'newev') return newEventSheet();
-  if (a === 'open') { D.cur = id; save(); return render(); }
+  if (a === 'evdel') {
+    var de = D.events.filter(function (y) { return y.id === id; })[0];
+    if (de && confirm('«' + de.name + '» 행사를 삭제할까요? 되돌릴 수 없어요.')) { D.events = D.events.filter(function (y) { return y !== de; }); if (D.cur === id) D.cur = null; save(); render(); }
+    return;
+  }
+  if (a === 'open') { HOME = false; D.cur = id; save(); return render(); }
   if (a === 'share') return share(F.x.msgs[+k]);
   if (a === 'copy') return copyText(F.x.msgs[+k].text);
   if (a === 'cancel') {
