@@ -283,6 +283,7 @@ function home() {
   $('foot').textContent = '';
   $('list').innerHTML = '<div class="empty">수학여행·수련회·체험학습을<br>시간 순서(일정)대로 나눠 두고,<br>그때마다 카톡 메시지를 한 번에 보내요.</div>'
     + '<div class="btns" style="margin:0"><button class="fin" data-a="newev">＋ 새 행사 만들기</button></div>'
+    + presetHTML()
     + (D.events.length ? '<div style="margin-top:16px">' + D.events.map(function (e) { return '<div class="evl"><b>' + esc(e.name) + '</b><button data-a="open" data-id="' + e.id + '">열기</button></div>'; }).join('') + '</div>' : '');
 }
 
@@ -316,6 +317,7 @@ function menuSheet() {
   sheet('<h2>행사</h2>'
     + D.events.map(function (x) { return '<div class="evl' + (x.id === e.id ? ' on' : '') + '"><b>' + esc(x.name) + '</b>' + (x.id === e.id ? '' : '<button data-open="' + x.id + '">열기</button>') + '</div>'; }).join('')
     + '<button class="opt" data-x="new">＋ 새 행사 만들기</button>'
+    + presetHTML()
     + '<h2 style="margin-top:18px">«' + esc(e.name) + '»</h2>'
     + '<button class="opt" data-x="link">🔗 링크로 넘겨주기<small>다른 선생님 폰에서 열면 이 행사가 그대로 복사돼요 (사진 제외)</small></button>'
     + '<button class="opt" data-x="rename">✏️ 행사 이름 바꾸기</button>'
@@ -363,15 +365,30 @@ function addPacked(o) {
   e.day = e.days[0].id;
   D.events.unshift(e); D.cur = e.id; save(); ED = null; render(); toast('«' + e.name + '» 행사를 받았어요');
 }
+/* 계획서로 미리 만들어 둔 행사 (ev/*.json) — 홈·행사 메뉴에서 눌러 받는다 */
+var PRESETS = [
+  {f: 'jeju2026', name: '✈️ 2학년 제주 수학여행', sub: '11/5~7 · 일정 28개 · 비상 탭'},
+  {f: 'pyeongchang2026', name: '🏔 1학년 평창 수련회', sub: '11/4~6 · 일정 24개 · 비상 탭'}
+];
+function presetHTML() {
+  return '<div class="ed" style="margin-top:18px"><label>계획서로 만든 행사 가져오기</label></div>'
+    + PRESETS.map(function (p) { return '<button class="opt" data-pre="' + p.f + '">' + p.name + '<small>' + p.sub + '</small></button>'; }).join('');
+}
+function loadPreset(name) {
+  fetch('ev/' + name + '.json', {cache: 'no-store'}).then(function (r) { return r.json(); }).then(function (o) {
+    var have = D.events.filter(function (e) { return e.name === o.n; })[0];
+    if (have) {
+      if (!confirm('«' + o.n + '» 행사가 이미 있어요. 새로 하나 더 받을까요?\n(취소하면 있던 행사를 열어요)')) { D.cur = have.id; save(); ED = null; render(); return; }
+    }
+    addPacked(o);
+  }).catch(function () { toast('행사를 받지 못했어요 — 인터넷을 확인해 주세요'); });
+}
 function readLink() {
   /* #f=이름 → ev/이름.json (계획서로 미리 만들어 둔 행사 — 링크가 짧다) */
   var f = location.hash.match(/^#f=([\w-]+)/);
   if (f) {
     history.replaceState(null, '', location.pathname);
-    fetch('ev/' + f[1] + '.json', {cache: 'no-store'}).then(function (r) { return r.json(); }).then(function (o) {
-      if (D.events.some(function (e) { return e.name === o.n; }) && !confirm('«' + o.n + '» 행사가 이미 있어요. 하나 더 받을까요?')) return;
-      addPacked(o);
-    }).catch(function () { toast('행사를 받지 못했어요 — 인터넷을 확인해 주세요'); });
+    loadPreset(f[1]);
     return;
   }
   var m = location.hash.match(/^#e=([zj])([\w-]+)/);
@@ -421,6 +438,8 @@ document.addEventListener('change', function (e) {
   });
 });
 document.addEventListener('click', function (e) {
+  var pr = e.target.closest('[data-pre]');
+  if (pr) { var sh = pr.closest('.sheet'); if (sh) sh.remove(); return loadPreset(pr.dataset.pre); }
   var b = e.target.closest('[data-a],[data-day],#menuB,#fab');
   var li = e.target.closest('li[data-j]');
   if (li && !ED) {
