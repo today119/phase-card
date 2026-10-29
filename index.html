@@ -4,10 +4,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B4F82">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="국면 카드">
+<meta name="apple-mobile-web-app-title" content="행사 진행 카드">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>국면 카드</title>
+<title>행사 진행 카드</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:#F1F5FA;color:#0F172A;-webkit-text-size-adjust:100%;padding-bottom:140px}
@@ -83,10 +83,10 @@ input,textarea,select{font-family:inherit}
 <div class="hd" id="hd"></div>
 <div class="list" id="list"></div>
 <div class="foot" id="foot"></div>
-<button class="fab" id="fab" hidden>＋ 국면 추가</button>
+<button class="fab" id="fab" hidden>＋ 일정 추가</button>
 <div class="toast" id="toast"></div>
 <script>
-/* 국면 카드 — 행사(수학여행·수련회·체험학습)를 국면별로 나눠 할 일 체크 + 카톡 보낼 말을 미리 써 두고 한 번에 보내는 도구.
+/* 행사 진행 카드 — 행사(수학여행·수련회·체험학습)를 일정별로 나눠 할 일 체크 + 카톡 보낼 말을 미리 써 두고 한 번에 보내는 도구.
    2026 꿈길 걷기 «진행 카드»(kkumgil/walk/lead.html)를 아무 행사에나 쓰게 일반화(10/29 사용자 요청).
    ★ 서버 없음: 행사는 이 폰 localStorage(pc_v1), 첨부 사진은 IndexedDB(pc_img). 다른 선생님께는 «링크로 넘겨주기»(#e= 압축 JSON, 사진 제외). */
 var KEY = 'pc_v1';
@@ -217,27 +217,27 @@ function render() {
   var d = dayOf(e); e.day = d.id;
   var arr = d.phases, nDone = arr.filter(function (x) { return x.done; }).length;
   $('hd').innerHTML = '<div class="hrow"><h1>🧭 ' + esc(e.name) + '</h1><button class="hb" id="menuB">행사 ▾</button></div>'
-    + '<div class="sub">' + esc(d.label) + ' · 국면 ' + arr.length + '개 · ' + nDone + ' 완료</div>'
+    + '<div class="sub">' + esc(d.label) + ' · 일정 ' + arr.length + '개 · ' + nDone + ' 완료</div>'
     + '<div class="seg">' + e.days.map(function (x) { return '<button data-day="' + x.id + '" class="' + (x.id === d.id ? 'on' : '') + '">' + esc(x.label) + '</button>'; }).join('')
     + '<button class="add" data-day="+">＋ 날</button></div>'
     + '<div class="bar"><i style="width:' + (arr.length ? nDone / arr.length * 100 : 0) + '%"></i></div>';
   var nowSet = false, h = '';
-  if (!arr.length) h = '<div class="empty">아직 국면이 없어요.<br>아래 <b>＋ 국면 추가</b>를 눌러<br>시각·이름·할 일·카톡 메시지를 써 보세요.</div>';
+  if (!arr.length) h = '<div class="empty">아직 일정이 없어요.<br>아래 <b>＋ 일정 추가</b>를 눌러<br>시각·이름·할 일·카톡 메시지를 써 보세요.</div>';
   arr.forEach(function (x, i) {
     var now = !x.done && !nowSet; if (now) nowSet = true;
     h += '<div class="card' + (x.done ? ' done' : '') + (now ? ' now' : '') + '" id="c' + x.id + '">';
     if (ED && ED.pid === x.id && ED.m === 'p') {
       h += '<div class="body ed" style="padding-top:10px"><label>시각 · 지점 (비워도 돼요)</label><input id="e_t" value="' + esc(x.t) + '" placeholder="예) 07:30 / 휴게소">'
-        + '<label>국면 이름</label><input id="e_p" value="' + esc(x.p) + '" placeholder="예) 버스 탑승">'
+        + '<label>일정 이름</label><input id="e_p" value="' + esc(x.p) + '" placeholder="예) 버스 탑승">'
         + '<label>할 일 (한 줄에 하나)</label><textarea id="e_todo" rows="4" placeholder="담임: 탑승 인원 확인&#10;담당: 출발 신호">' + esc(x.todo.map(function (t) { return (t[0] ? t[0] + ': ' : '') + t[1]; }).join('\n')) + '</textarea>'
         + '<div class="hint">«누가: 할 일» 으로 쓰면 앞에 이름표가 붙어요</div>'
         + '<div class="btns"><button class="copy" data-a="up" data-id="' + x.id + '">▲ 위로</button><button class="copy" data-a="down" data-id="' + x.id + '">▼ 아래로</button></div>'
         + '<div class="btns"><button class="copy" data-a="cancel">취소</button><button class="fin" data-a="psave" data-id="' + x.id + '">저장</button></div>'
-        + '<div class="btns"><button class="del" data-a="pdel" data-id="' + x.id + '">🗑 이 국면 삭제</button></div></div></div>';
+        + '<div class="btns"><button class="del" data-a="pdel" data-id="' + x.id + '">🗑 이 일정 삭제</button></div></div></div>';
       return;
     }
     h += '<div class="ch"><div class="num">' + (i + 1) + '</div><div class="ct"><b>' + esc(x.p) + '</b><small>' + esc(x.t) + (x.done ? (x.t ? ' · ' : '') + '✅ ' + x.done + ' 완료' : '') + '</small></div>'
-      + '<button class="pen" data-a="pedit" data-id="' + x.id + '" aria-label="국면 고치기">✏️</button></div><div class="body">';
+      + '<button class="pen" data-a="pedit" data-id="' + x.id + '" aria-label="일정 고치기">✏️</button></div><div class="body">';
     if (x.todo.length) h += '<ul class="todo">' + x.todo.map(function (t, j) {
       var ok = (x.ck || []).indexOf(j) >= 0;
       return '<li class="' + (ok ? 'ok' : '') + '" data-id="' + x.id + '" data-j="' + j + '"><span class="bx">' + (ok ? '✓' : '') + '</span><span class="tx">' + (t[0] ? '<span class="tg">' + esc(t[0]) + '</span>' : '') + esc(t[1]) + '</span></li>';
@@ -251,8 +251,8 @@ function render() {
         + '<button class="copy sm" data-a="medit" data-id="' + x.id + '" data-k="' + k + '">✏️</button></div>';
     });
     if (ED && ED.pid === x.id && ED.m === 'new') h += msgEditor(x, {text: ''}, 'new');
-    h += '<div class="mini"><button data-a="mnew" data-id="' + x.id + '">＋ 메시지 추가</button><button data-a="pnew" data-id="' + x.id + '">＋ 아래에 국면</button></div>'
-      + '<div class="btns"><button class="fin" data-a="fin" data-id="' + x.id + '">' + (x.done ? '↩ 완료 취소' : '✅ 이 국면 완료') + '</button></div></div></div>';
+    h += '<div class="mini"><button data-a="mnew" data-id="' + x.id + '">＋ 메시지 추가</button><button data-a="pnew" data-id="' + x.id + '">＋ 아래에 일정</button></div>'
+      + '<div class="btns"><button class="fin" data-a="fin" data-id="' + x.id + '">' + (x.done ? '↩ 완료 취소' : '✅ 이 일정 완료') + '</button></div></div></div>';
   });
   $('list').innerHTML = h;
   $('fab').hidden = !!ED;
@@ -269,10 +269,10 @@ function msgEditor(x, m, k) {
     + (k === 'new' ? '' : '<div class="btns"><button class="del" data-a="mdel" data-id="' + x.id + '" data-k="' + k + '">🗑 이 메시지 삭제</button></div>') + '</div>';
 }
 function home() {
-  $('hd').innerHTML = '<div class="hrow"><h1>🧭 국면 카드</h1></div><div class="sub">행사를 국면별로 — 할 일 체크 + 카톡 보낼 말</div>';
+  $('hd').innerHTML = '<div class="hrow"><h1>🧭 행사 진행 카드</h1></div><div class="sub">행사를 일정별로 — 할 일 체크 + 카톡 보낼 말</div>';
   $('fab').hidden = true;
   $('foot').textContent = '';
-  $('list').innerHTML = '<div class="empty">수학여행·수련회·체험학습을<br>시간 순서(국면)대로 나눠 두고,<br>그때마다 카톡 메시지를 한 번에 보내요.</div>'
+  $('list').innerHTML = '<div class="empty">수학여행·수련회·체험학습을<br>시간 순서(일정)대로 나눠 두고,<br>그때마다 카톡 메시지를 한 번에 보내요.</div>'
     + '<div class="btns" style="margin:0"><button class="fin" data-a="newev">＋ 새 행사 만들기</button></div>'
     + (D.events.length ? '<div style="margin-top:16px">' + D.events.map(function (e) { return '<div class="evl"><b>' + esc(e.name) + '</b><button data-a="open" data-id="' + e.id + '">열기</button></div>'; }).join('') + '</div>' : '');
 }
@@ -286,11 +286,11 @@ function sheet(html, bind) {
 }
 function newEventSheet() {
   var pick = 'trip';
-  sheet('<h2>새 행사 만들기</h2><p>기본 틀을 고르면 국면과 메시지가 미리 들어가요. 다 고칠 수 있어요.</p>'
+  sheet('<h2>새 행사 만들기</h2><p>기본 틀을 고르면 일정과 메시지가 미리 들어가요. 다 고칠 수 있어요.</p>'
     + '<div class="ed"><label>행사 이름</label><input id="ne_name" placeholder="예) 2학년 수학여행 (11/4~6)"></div>'
     + Object.keys(TPL).map(function (k) {
         var T = TPL[k], n = T.days.reduce(function (a, d) { return a + d[1].length; }, 0);
-        return '<button class="opt' + (k === pick ? ' on' : '') + '" data-k="' + k + '">' + T.name + '<small>' + (n ? T.days.length + '일 · 국면 ' + n + '개' : '국면 없이 처음부터') + '</small></button>';
+        return '<button class="opt' + (k === pick ? ' on' : '') + '" data-k="' + k + '">' + T.name + '<small>' + (n ? T.days.length + '일 · 일정 ' + n + '개' : '일정 없이 처음부터') + '</small></button>';
       }).join('')
     + '<div class="btns" style="margin-top:14px"><button class="copy" data-x="no">취소</button><button class="fin" data-x="ok">만들기</button></div>', function (s) {
     s.querySelectorAll('.opt').forEach(function (b) { b.onclick = function () { pick = b.dataset.k; s.querySelectorAll('.opt').forEach(function (o) { o.classList.toggle('on', o === b); }); }; });
@@ -323,7 +323,7 @@ function menuSheet() {
         else if (x === 'link') shareLink(e);
         else if (x === 'rename') { var n = prompt('행사 이름', e.name); if (n && n.trim()) { e.name = n.trim(); save(); render(); } }
         else if (x === 'dayname') { var m = prompt('탭 이름', d.label); if (m && m.trim()) { d.label = m.trim(); save(); render(); } }
-        else if (x === 'daydel') { if (confirm('«' + d.label + '» 탭과 그 안의 국면을 모두 지울까요?')) { e.days = e.days.filter(function (y) { return y !== d; }); e.day = e.days[0].id; save(); render(); } }
+        else if (x === 'daydel') { if (confirm('«' + d.label + '» 탭과 그 안의 일정을 모두 지울까요?')) { e.days = e.days.filter(function (y) { return y !== d; }); e.day = e.days[0].id; save(); render(); } }
         else if (x === 'reset') { if (confirm('이 행사의 체크·완료 표시를 모두 지울까요? (내용은 그대로)')) { e.days.forEach(function (y) { y.phases.forEach(function (p) { p.ck = []; p.done = ''; }); }); save(); render(); } }
         else if (x === 'del') { if (confirm('«' + e.name + '» 행사를 삭제할까요? 되돌릴 수 없어요.')) { D.events = D.events.filter(function (y) { return y !== e; }); D.cur = D.events[0] ? D.events[0].id : null; save(); render(); } }
       };
@@ -341,7 +341,7 @@ function shareLink(e) {
   var json = JSON.stringify(packEvent(e));
   var done = function (code) {
     var url = location.origin + location.pathname + '#e=' + code;
-    var text = '[국면 카드] «' + e.name + '»\n아래 링크를 열면 선생님 폰에 이 행사가 복사돼요 👇\n' + url;
+    var text = '[행사 진행 카드] «' + e.name + '»\n아래 링크를 열면 선생님 폰에 이 행사가 복사돼요 👇\n' + url;
     if (navigator.share) navigator.share({text: text}).catch(function () {});
     else copyText(text, '링크를 복사했어요');
   };
@@ -449,20 +449,20 @@ document.addEventListener('click', function (e) {
   if (a === 'imgdel') { var mm = F.x.msgs[+k]; if (mm && mm.img) { delImg(mm.img); delete mm.img; save(); } pendingImg = null; return render(); }
   if (a === 'mdel') { if (!confirm('이 메시지를 지울까요?')) return; var dm = F.x.msgs.splice(+k, 1)[0]; if (dm && dm.img) delImg(dm.img); ED = null; save(); return render(); }
   if (a === 'psave') {
-    F.x.t = $('e_t').value.trim(); F.x.p = $('e_p').value.trim() || '새 국면';
+    F.x.t = $('e_t').value.trim(); F.x.p = $('e_p').value.trim() || '새 일정';
     F.x.todo = $('e_todo').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
       var mt = l.match(/^([^:：]{1,10})[:：]\s*(.+)$/); return mt ? [mt[1].trim(), mt[2]] : ['', l];
     });
     F.x.ck = [];
     var wasFresh = ED.fresh;
-    ED = wasFresh && !F.x.msgs.length ? {pid: F.x.id, m: 'new', focus: true} : null;   // 새 국면이면 바로 메시지 쓰기로
+    ED = wasFresh && !F.x.msgs.length ? {pid: F.x.id, m: 'new', focus: true} : null;   // 새 일정이면 바로 메시지 쓰기로
     save(); toast('저장했어요'); return render();
   }
   if (a === 'up' || a === 'down') {
     var to = F.i + (a === 'up' ? -1 : 1); if (to < 0 || to >= F.L.length) return;
     F.L.splice(to, 0, F.L.splice(F.i, 1)[0]); save(); return render();
   }
-  if (a === 'pdel') { if (!confirm('«' + (F.x.p || '새 국면') + '» 국면을 지울까요?')) return; F.x.msgs.forEach(function (q) { if (q.img) delImg(q.img); }); F.L.splice(F.i, 1); ED = null; save(); return render(); }
+  if (a === 'pdel') { if (!confirm('«' + (F.x.p || '새 일정') + '» 일정을 지울까요?')) return; F.x.msgs.forEach(function (q) { if (q.img) delImg(q.img); }); F.L.splice(F.i, 1); ED = null; save(); return render(); }
   if (a === 'fin') {
     if (F.x.done) F.x.done = '';
     else { var t = new Date(); F.x.done = ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2); }
