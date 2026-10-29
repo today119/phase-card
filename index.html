@@ -365,9 +365,13 @@ function shareLink(e) {
     new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer().then(function (b) { done('z' + b64u(b)); }, function () { done('j' + b64u(new TextEncoder().encode(json))); });
   } else done('j' + b64u(new TextEncoder().encode(json)));
 }
-function addPacked(o) {
+function makePacked(o) {
   var e = {id: uid(), name: o.n, days: o.d.map(function (d) { return {id: uid(), label: d[0], phases: d[1].map(function (q) { return {id: uid(), t: q[0], p: q[1], todo: q[2] || [], msgs: (q[3] || []).map(function (t) { return {text: t}; }), ck: [], done: ''}; })}; })};
   e.day = e.days[0].id;
+  return e;
+}
+function addPacked(o) {
+  var e = makePacked(o);
   D.events.unshift(e); HOME = false; D.cur = e.id; save(); ED = null; render(); toast('«' + e.name + '» 행사를 받았어요');
 }
 /* 계획서로 미리 만들어 둔 행사 (ev/*.json) — 홈·행사 메뉴에서 눌러 받는다 */
@@ -484,8 +488,8 @@ document.addEventListener('click', function (e) {
   if (a === 'medit') { ED = {pid: id, m: +k, focus: true}; pendingImg = null; return render(); }
   if (a === 'mnew') { ED = {pid: id, m: 'new', focus: true}; pendingImg = null; return render(); }
   if (a === 'pedit') { ED = {pid: id, m: 'p', focus: true}; return render(); }
-  if (a === 'pnew') { var nq = {id: uid(), t: '', p: '', todo: [], msgs: [], ck: [], done: ''}; F.L.splice(F.i + 1, 0, nq); ED = {pid: nq.id, m: 'p', focus: true, fresh: true}; save(); return render(); }
-  if (a === 'msave') {
+  if (a === 'pnew') { ev().edited = true; var nq = {id: uid(), t: '', p: '', todo: [], msgs: [], ck: [], done: ''}; F.L.splice(F.i + 1, 0, nq); ED = {pid: nq.id, m: 'p', focus: true, fresh: true}; save(); return render(); }
+  if (a === 'msave') { ev().edited = true;
     var txt = $('e_msg').value.replace(/\s+$/, '');
     var m = k === 'new' ? {text: ''} : F.x.msgs[+k];
     if (!txt && !pendingImg && !m.img) { ED = null; return render(); }
@@ -495,9 +499,9 @@ document.addEventListener('click', function (e) {
     else fin();
     return;
   }
-  if (a === 'imgdel') { var mm = F.x.msgs[+k]; if (mm && mm.img) { delImg(mm.img); delete mm.img; save(); } pendingImg = null; return render(); }
-  if (a === 'mdel') { if (!confirm('이 메시지를 지울까요?')) return; var dm = F.x.msgs.splice(+k, 1)[0]; if (dm && dm.img) delImg(dm.img); ED = null; save(); return render(); }
-  if (a === 'psave') {
+  if (a === 'imgdel') { ev().edited = true; var mm = F.x.msgs[+k]; if (mm && mm.img) { delImg(mm.img); delete mm.img; save(); } pendingImg = null; return render(); }
+  if (a === 'mdel') { ev().edited = true; if (!confirm('이 메시지를 지울까요?')) return; var dm = F.x.msgs.splice(+k, 1)[0]; if (dm && dm.img) delImg(dm.img); ED = null; save(); return render(); }
+  if (a === 'psave') { ev().edited = true;
     F.x.t = $('e_t').value.trim(); F.x.p = $('e_p').value.trim() || '새 일정';
     F.x.todo = $('e_todo').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
       var mt = l.match(/^([^:：]{1,10})[:：]\s*(.+)$/); return mt ? [mt[1].trim(), mt[2]] : ['', l];
@@ -507,11 +511,11 @@ document.addEventListener('click', function (e) {
     ED = wasFresh && !F.x.msgs.length ? {pid: F.x.id, m: 'new', focus: true} : null;   // 새 일정이면 바로 메시지 쓰기로
     save(); toast('저장했어요'); return render();
   }
-  if (a === 'up' || a === 'down') {
+  if (a === 'up' || a === 'down') { ev().edited = true;
     var to = F.i + (a === 'up' ? -1 : 1); if (to < 0 || to >= F.L.length) return;
     F.L.splice(to, 0, F.L.splice(F.i, 1)[0]); save(); return render();
   }
-  if (a === 'pdel') { if (!confirm('«' + (F.x.p || '새 일정') + '» 일정을 지울까요?')) return; F.x.msgs.forEach(function (q) { if (q.img) delImg(q.img); }); F.L.splice(F.i, 1); ED = null; save(); return render(); }
+  if (a === 'pdel') { ev().edited = true; if (!confirm('«' + (F.x.p || '새 일정') + '» 일정을 지울까요?')) return; F.x.msgs.forEach(function (q) { if (q.img) delImg(q.img); }); F.L.splice(F.i, 1); ED = null; save(); return render(); }
   if (a === 'fin') {
     if (F.x.done) F.x.done = '';
     else { var t = new Date(); F.x.done = ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2); }
@@ -519,9 +523,37 @@ document.addEventListener('click', function (e) {
     if (F.x.done) { var n2 = document.querySelector('.card.now'); if (n2) window.scrollTo({top: n2.offsetTop - 140, behavior: 'smooth'}); }
   }
 });
+/* 10/29: 링크 열기 + 가져오기 버튼이 겹쳐 같은 행사가 2개씩 쌓였다 → 내용이 똑같고 손대지 않은(체크·완료 없음) 사본은 하나만 남긴다 */
+(function dedupe() {
+  var seen = {}, n0 = D.events.length;
+  D.events = D.events.filter(function (e) {
+    var used = e.days.some(function (d) { return d.phases.some(function (p) { return (p.ck && p.ck.length) || p.done; }); });
+    var key = JSON.stringify(packEvent(e));
+    if (seen[key] && !used) return false;
+    if (!used) seen[key] = 1;
+    return true;
+  });
+  if (D.events.length !== n0) { if (!D.events.some(function (e) { return e.id === D.cur; })) D.cur = null; save(); }
+})();
+/* 계획서 행사가 고쳐지면(ev/*.json) 손대지 않은 사본은 새 내용으로 바꿔 준다 — 체크·완료가 있거나 사용자가 고친 사본은 그대로 */
+function refreshPresets() {
+  PRESETS.forEach(function (pr) {
+    fetch('ev/' + pr.f + '.json', {cache: 'no-store'}).then(function (r) { return r.json(); }).then(function (o) {
+      var newKey = JSON.stringify(o), changed = 0;
+      D.events.forEach(function (e, i) {
+        if (e.name !== o.n || e.edited) return;
+        var used = e.days.some(function (d) { return d.phases.some(function (p) { return (p.ck && p.ck.length) || p.done; }); });
+        if (used || JSON.stringify(packEvent(e)) === newKey) return;
+        var ne = makePacked(o); ne.id = e.id; D.events[i] = ne; changed++;
+      });
+      if (changed) { save(); render(); toast('«' + o.n + '» 최신 계획서 내용으로 바꿨어요'); }
+    }).catch(function () {});
+  });
+}
 window.addEventListener('hashchange', readLink);
 readLink();
 render();
+refreshPresets();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
 </script>
 </body></html>
