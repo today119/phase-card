@@ -52,6 +52,7 @@ input,textarea,select{font-family:inherit}
 .fin{background:#0B4F82;color:#fff}
 .card.done .fin{background:#94A3B8}
 .del{background:#FEE2E2;color:#B91C1C}
+.ins{display:block;width:100%;margin:-4px 0 14px;border:2px dashed #F59E0B;background:#FFFBEB;color:#B45309;border-radius:14px;padding:10px;font-size:14px;font-weight:900}
 .mini{display:flex;gap:8px;margin-top:10px}
 .mini button{flex:1;border:1px dashed #94A3B8;background:none;color:#475569;border-radius:12px;padding:9px 4px;font-size:13px;font-weight:800}
 .ed{margin-top:10px}
@@ -251,8 +252,9 @@ function render() {
         + '<button class="copy sm" data-a="medit" data-id="' + x.id + '" data-k="' + k + '">✏️</button></div>';
     });
     if (ED && ED.pid === x.id && ED.m === 'new') h += msgEditor(x, {text: ''}, 'new');
-    h += '<div class="mini"><button data-a="mnew" data-id="' + x.id + '">＋ 메시지 추가</button><button data-a="pnew" data-id="' + x.id + '">＋ 아래에 일정</button></div>'
-      + '<div class="btns"><button class="fin" data-a="fin" data-id="' + x.id + '">' + (x.done ? '↩ 완료 취소' : '✅ 이 일정 완료') + '</button></div></div></div>';
+    h += '<div class="mini"><button data-a="mnew" data-id="' + x.id + '">＋ 메시지 추가</button></div>'
+      + '<div class="btns"><button class="fin" data-a="fin" data-id="' + x.id + '">' + (x.done ? '↩ 완료 취소' : '✅ 이 일정 완료') + '</button></div></div></div>'
+      + (ED ? '' : '<button class="ins" data-a="pnew" data-id="' + x.id + '">＋ ' + (i + 1) + '번 다음에 일정 추가</button>');
   });
   $('list').innerHTML = h;
   $('fab').hidden = !!ED;
