@@ -351,7 +351,22 @@ function shareLink(e) {
     new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer().then(function (b) { done('z' + b64u(b)); }, function () { done('j' + b64u(new TextEncoder().encode(json))); });
   } else done('j' + b64u(new TextEncoder().encode(json)));
 }
+function addPacked(o) {
+  var e = {id: uid(), name: o.n, days: o.d.map(function (d) { return {id: uid(), label: d[0], phases: d[1].map(function (q) { return {id: uid(), t: q[0], p: q[1], todo: q[2] || [], msgs: (q[3] || []).map(function (t) { return {text: t}; }), ck: [], done: ''}; })}; })};
+  e.day = e.days[0].id;
+  D.events.unshift(e); D.cur = e.id; save(); ED = null; render(); toast('«' + e.name + '» 행사를 받았어요');
+}
 function readLink() {
+  /* #f=이름 → ev/이름.json (계획서로 미리 만들어 둔 행사 — 링크가 짧다) */
+  var f = location.hash.match(/^#f=([\w-]+)/);
+  if (f) {
+    history.replaceState(null, '', location.pathname);
+    fetch('ev/' + f[1] + '.json', {cache: 'no-store'}).then(function (r) { return r.json(); }).then(function (o) {
+      if (D.events.some(function (e) { return e.name === o.n; }) && !confirm('«' + o.n + '» 행사가 이미 있어요. 하나 더 받을까요?')) return;
+      addPacked(o);
+    }).catch(function () { toast('행사를 받지 못했어요 — 인터넷을 확인해 주세요'); });
+    return;
+  }
   var m = location.hash.match(/^#e=([zj])([\w-]+)/);
   if (!m) return;
   history.replaceState(null, '', location.pathname);
@@ -359,12 +374,7 @@ function readLink() {
   var p = m[1] === 'z' && window.DecompressionStream
     ? new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text()
     : Promise.resolve(new TextDecoder().decode(bytes));
-  p.then(function (txt) {
-    var o = JSON.parse(txt);
-    var e = {id: uid(), name: o.n, days: o.d.map(function (d) { return {id: uid(), label: d[0], phases: d[1].map(function (q) { return {id: uid(), t: q[0], p: q[1], todo: q[2] || [], msgs: (q[3] || []).map(function (t) { return {text: t}; }), ck: [], done: ''}; })}; })};
-    e.day = e.days[0].id;
-    D.events.unshift(e); D.cur = e.id; save(); render(); toast('«' + e.name + '» 행사를 받았어요');
-  }).catch(function () { toast('링크를 읽지 못했어요'); });
+  p.then(function (txt) { addPacked(JSON.parse(txt)); }).catch(function () { toast('링크를 읽지 못했어요'); });
 }
 
 /* ── 보내기·복사 ── */
